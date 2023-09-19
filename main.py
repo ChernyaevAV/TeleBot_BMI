@@ -11,6 +11,10 @@ from aiogram.utils.markdown import hbold
 from config import BOT_TOKEN
 
 TOKEN = BOT_TOKEN
+TEXT_PREV_REQUEST = '''Отлично, укажите свой вес (кг) и рост (см) 
+                    через пробел, например 55 165:'''
+TEXT_IF_VALUE_ERROR = "нужно указать 2 числа через пробел, например: 55 165"
+
 
 dp = Dispatcher()
 bot = Bot(TOKEN, parse_mode=ParseMode.HTML)
@@ -24,7 +28,7 @@ kb_yes_no = InlineKeyboardMarkup(inline_keyboard=[[button_yes, button_no]])
 async def command_start_handler(message: Message) -> None:
 
     await message.answer(f"Привет, {hbold(message.from_user.full_name)}!\n"
-                         f"Вычислить индекс массы?",
+                         f"Вычислить индекс массы тела?",
                          reply_markup=kb_yes_no)
 
 
@@ -33,8 +37,7 @@ async def yes_handler(callback_query: CallbackQuery):
 
     await bot.answer_callback_query(callback_query.id)
     await bot.send_message(chat_id=callback_query.from_user.id,
-                           text='''Отлично, укажите свой вес (кг) и рост (см) 
-                           через пробел, например 55 165:''')
+                           text=TEXT_PREV_REQUEST)
 
 
 @dp.callback_query(F.data == 'button_no')
@@ -48,33 +51,28 @@ async def yes_handler(callback_query: CallbackQuery):
 @dp.message(F.text.regexp(r'\d+'))
 async def get_params(message: Message):
     try:
-        _weight, _height = map(float, message.text.split())
+        _weight, _height = map(float, message.text.strip().split())
         _height /= 100
         _bmi = calculate_bmi(_weight, _height)
-        await bot.send_message(chat_id=message.from_user.id,
-                               text=f'Индекс вашего тела: {_bmi:.1f}')
 
         if _bmi < 18.5:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text='Недостаточная масса тела [до 18.5]')
+            text_res = '[до 18.5] - Недостаточная масса тела'
         elif 18.5 <= _bmi < 24.9:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text='Нормальная масса тела [18.5 - 24.9]')
+            text_res = '[18.5 - 24.9] - Нормальная масса тела'
         elif 24.9 <= _bmi < 29.9:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text='''Избыточная масса тела (предожирение)
-                                    [24.9 - 29.9]''')
+            text_res = '[24.9 - 29.9] - Избыточная масса тела (предожирение)'
         else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text='Ожирение [более 29.9]')
+            text_res = '[более 29.9] - Ожирение'
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'Индекс вашего тела: {_bmi:.1f}\n'
+                                    f'{text_res}')
 
     except ValueError:
         logging.basicConfig(filename='log.txt', level=logging.ERROR)
         await message.answer(f"{hbold(message.from_user.first_name)}!\n"
-                             f"нужно указать 2 числа через пробел, "
-                             f"например: 55 165")
+                             f"{TEXT_IF_VALUE_ERROR}")
     else:
-        await message.answer(f"{hbold(message.from_user.full_name)}!\n"
+        await message.answer(f"{hbold(message.from_user.first_name)}!\n"
                              f"Вычислить еще раз индекс массы?",
                              reply_markup=kb_yes_no)
 
@@ -83,8 +81,7 @@ async def get_params(message: Message):
 async def get_incorrect_data(message: Message):
     logging.basicConfig(filename='log.txt', level=logging.ERROR)
     await message.answer(f"{hbold(message.from_user.first_name)},\n"
-                         f"нужно указать 2 числа через пробел, "
-                         f"например: 55 165")
+                         f"{TEXT_IF_VALUE_ERROR}")
 
 
 def calculate_bmi(_weight, _height):

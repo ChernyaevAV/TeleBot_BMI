@@ -19,3 +19,10 @@
 git clone https://github.com/ChernyaevAV/TeleBot_BMI.git
 cd telebot_bmi
 ```
+
+Настройка файла конфигурации
+```
+cd telebot_bmi
+touch config.py
+BOT_TOKEN = 'YOUR_BOT_TOKEN'
+```

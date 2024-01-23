@@ -27,7 +27,7 @@ kb_yes_no = InlineKeyboardMarkup(inline_keyboard=[[button_yes, button_no]])
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
 
-    await message.answer(f"Привет, {hbold(message.from_user.full_name)}!\n"
+    await message.answer(f"Привет, {hbold(message.from_user.first_name)}!\n"
                          f"Вычислить индекс массы тела?",
                          reply_markup=kb_yes_no)
 
